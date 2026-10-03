@@ -4,6 +4,7 @@
 
 // CoreInk in M5Unified: BtnA = G37 dial up, BtnB = G38 dial press, BtnC = G39 dial down,
 // BtnEXT = G5 top button: tap = BACK (on release), hold = RANDOM.
+// BtnPWR = G27 power button: tap while on = REFRESH (powering on is handled in hardware).
 static constexpr uint32_t HOLD_MS = 600;
 static constexpr uint32_t REPEAT_MS = 300;
 
@@ -26,6 +27,7 @@ void input_init() { M5.BtnEXT.setHoldThresh(HOLD_MS); }
 
 Input input_poll() {
   if (M5.BtnB.wasPressed()) return Input::PRESS;
+  if (M5.BtnPWR.wasClicked()) return Input::REFRESH;
   if (M5.BtnEXT.wasHold()) return Input::RANDOM;
   if (M5.BtnEXT.wasClicked()) return Input::BACK;
   Input in = dial(M5.BtnA, Input::UP, Input::UP_FAST);
@@ -42,6 +44,7 @@ const char* input_name(Input in) {
     case Input::PRESS: return "PRESS";
     case Input::BACK: return "BACK";
     case Input::RANDOM: return "RANDOM";
+    case Input::REFRESH: return "REFRESH";
     default: return "NONE";
   }
 }

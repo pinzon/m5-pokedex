@@ -1,6 +1,6 @@
 #pragma once
 
-enum class Input { NONE, UP, DOWN, UP_FAST, DOWN_FAST, PRESS, BACK, RANDOM };
+enum class Input { NONE, UP, DOWN, UP_FAST, DOWN_FAST, PRESS, BACK, RANDOM, REFRESH };
 
 void input_init();  // after M5.begin()
 // Call once per loop after M5.update().

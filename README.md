@@ -23,7 +23,7 @@ The CoreInk has a three-way dial on the side (up, down, press) and a button on t
 | Pokemon | Previous / next Pokemon | Next page | Back to the list | Random Pokemon |
 | Jump | Change the digit | Confirm the digit | Cancel | Random Pokemon |
 
-The power button wakes the device and you continue where you left off.
+The power button wakes the device and you continue where you left off. While it's on, a tap on the power button cleans up any leftover ghosting on the screen.
 
 ## What you need
 
@@ -62,7 +62,7 @@ The build fails with a missing-file error until this has been run once. The firs
 
 - **Data**: each Pokemon is a fixed-size 3 KB record (name, category, types, height, weight, base stats, description and a 144x144 one-bit sprite). The firmware reads the records straight from flash, so the 1.2 MB of data uses almost no RAM.
 - **Sprites**: the script crops each sprite, scales it up with crisp pixel edges, then maps dark tones to black, mid tones to a checkerboard and light tones to white, and adds a black outline. Regular dithering turned out noisy and made pale Pokemon like Lugia nearly invisible.
-- **Screen updates**: every button press does a fast refresh of only the part of the screen that changed. Fast refreshes slowly leave faint "ghosts" of earlier images, so after 10 refreshes and 10 seconds without input the screen does one slower, flashing redraw to clean up. It does the same right before powering off.
+- **Screen updates**: every button press does a fast refresh of only the part of the screen that changed. Fast refreshes slowly leave faint "ghosts" of earlier images, so after 5 refreshes and 5 seconds without input the screen does one slower, flashing redraw to clean up. It does the same right before powering off, and you can trigger it any time with a tap on the power button.
 - **Saving your place**: the current screen, Pokemon and page are saved to flash shortly after you stop pressing buttons, and restored when the device wakes up.
 
 ## Project layout

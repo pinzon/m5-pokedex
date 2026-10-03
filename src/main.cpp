@@ -9,8 +9,8 @@ enum class Screen : uint8_t { LIST, JUMP, DETAIL };
 
 static constexpr uint32_t SAVE_AFTER_MS = 1500;
 // Ghosting cleanup: a flashing quality redraw, only after enough fast refreshes and a long idle.
-static constexpr uint32_t CLEAN_AFTER_MS = 10000;
-static constexpr int CLEAN_AFTER_REFRESHES = 10;
+static constexpr uint32_t CLEAN_AFTER_MS = 5000;
+static constexpr int CLEAN_AFTER_REFRESHES = 5;
 static constexpr uint32_t POWER_OFF_AFTER_MS = 60000;
 static constexpr int DETAIL_PAGES = 3;
 
@@ -160,7 +160,11 @@ void loop() {
   const uint32_t now = millis();
   const Input in = input_poll();
 
-  if (in != Input::NONE) {
+  if (in == Input::REFRESH) {
+    Serial.println("input REFRESH");
+    render_clean();  // manual ghosting cleanup; resets the refresh counter
+    last_input = now;
+  } else if (in != Input::NONE) {
     Serial.printf("input %s\n", input_name(in));
     if (in == Input::RANDOM) show_random();
     else switch (screen) {
