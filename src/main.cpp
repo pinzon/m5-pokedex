@@ -60,6 +60,13 @@ static void start_jump() {
   screen = Screen::JUMP;
 }
 
+static void show_random() {
+  const uint16_t n = dex_count();
+  cursor = (cursor + 1 + esp_random() % (n - 1)) % n;  // never the current entry
+  screen = Screen::DETAIL;
+  page = 0;
+}
+
 static void handle_list(Input in) {
   switch (in) {
     case Input::UP: move(-1); break;
@@ -103,6 +110,7 @@ void setup() {
   auto cfg = M5.config();
   cfg.serial_baudrate = 115200;
   M5.begin(cfg);
+  input_init();
   ui_init();
 
   if (!dex_init()) {
@@ -128,7 +136,8 @@ void loop() {
 
   if (in != Input::NONE) {
     Serial.printf("input %s\n", input_name(in));
-    switch (screen) {
+    if (in == Input::RANDOM) show_random();
+    else switch (screen) {
       case Screen::LIST: handle_list(in); break;
       case Screen::JUMP: handle_jump(in); break;
       case Screen::DETAIL: handle_detail(in); break;

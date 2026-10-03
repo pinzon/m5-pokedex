@@ -3,7 +3,7 @@
 #include <M5Unified.h>
 
 // CoreInk in M5Unified: BtnA = G37 dial up, BtnB = G38 dial press, BtnC = G39 dial down,
-// BtnEXT = G5 top button.
+// BtnEXT = G5 top button: tap = BACK (on release), hold = RANDOM.
 static constexpr uint32_t HOLD_MS = 600;
 static constexpr uint32_t REPEAT_MS = 300;
 
@@ -22,9 +22,12 @@ static Input dial(m5::Button_Class& btn, Input step, Input fast) {
   return Input::NONE;
 }
 
+void input_init() { M5.BtnEXT.setHoldThresh(HOLD_MS); }
+
 Input input_poll() {
   if (M5.BtnB.wasPressed()) return Input::PRESS;
-  if (M5.BtnEXT.wasPressed()) return Input::BACK;
+  if (M5.BtnEXT.wasHold()) return Input::RANDOM;
+  if (M5.BtnEXT.wasClicked()) return Input::BACK;
   Input in = dial(M5.BtnA, Input::UP, Input::UP_FAST);
   if (in != Input::NONE) return in;
   return dial(M5.BtnC, Input::DOWN, Input::DOWN_FAST);
@@ -38,6 +41,7 @@ const char* input_name(Input in) {
     case Input::DOWN_FAST: return "DOWN_FAST";
     case Input::PRESS: return "PRESS";
     case Input::BACK: return "BACK";
+    case Input::RANDOM: return "RANDOM";
     default: return "NONE";
   }
 }
