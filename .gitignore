@@ -3,3 +3,4 @@
 tools/cache/
 tools/preview/
 __pycache__/
+data/dex.bin

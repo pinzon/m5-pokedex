@@ -42,20 +42,21 @@ sudo usermod -aG dialout $USER
 ```sh
 git clone https://github.com/pinzon/m5-pokedex.git
 cd m5-pokedex
+uv run tools/build_dex.py   # generate the Pokedex data (see below)
 pio run -t upload
 ```
 
 The upload port is set to `/dev/ttyACM0` in `platformio.ini`; change `upload_port` and `monitor_port` if your board shows up elsewhere. `pio device monitor` shows a boot message and every button press, which helps when something doesn't respond as expected.
 
-## Regenerating the Pokedex data
+## Generating the Pokedex data
 
-All Pokemon data lives in a single file, `data/dex.bin`, which is built into the firmware. It's generated from [PokeAPI](https://pokeapi.co/) by a Python script:
+All Pokemon data lives in a single file, `data/dex.bin`, which is built into the firmware. It isn't included in this repository because it contains Pokemon artwork and text, so you generate it yourself from [PokeAPI](https://pokeapi.co/) with a Python script (needs [uv](https://docs.astral.sh/uv/)):
 
 ```sh
 uv run tools/build_dex.py
 ```
 
-The first run downloads about 1,200 files (a few minutes) and caches them in `tools/cache/`, so later runs work offline. It also writes a few sample sprites to `tools/preview/` so you can check how the conversion looks. Change `COUNT` in the script to include more generations (the full National Dex still fits in flash).
+The build fails with a missing-file error until this has been run once. The first run downloads about 1,200 files (a few minutes) and caches them in `tools/cache/`, so later runs work offline. It also writes a few sample sprites to `tools/preview/` so you can check how the conversion looks. Change `COUNT` in the script to include more generations (the full National Dex still fits in flash).
 
 ## How it works
 
@@ -72,7 +73,7 @@ src/ui.cpp          drawing the list, jump box and Pokemon pages
 src/input.cpp       dial and button handling (hold, repeat, tap vs. hold)
 src/dex.cpp         reading Pokemon records from the embedded data file
 tools/build_dex.py  builds data/dex.bin from PokeAPI
-data/dex.bin        the generated Pokedex data
+data/dex.bin        the generated Pokedex data (not in git)
 ```
 
 Built with [M5Unified](https://github.com/m5stack/M5Unified) and [M5GFX](https://github.com/m5stack/M5GFX) on the Arduino framework.
