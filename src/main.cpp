@@ -7,7 +7,10 @@
 
 enum class Screen : uint8_t { LIST, JUMP, DETAIL };
 
-static constexpr uint32_t QUALITY_AFTER_MS = 1500;  // clean redraw to clear ghosting
+static constexpr uint32_t SAVE_AFTER_MS = 1500;
+// Ghosting cleanup: a flashing quality redraw, only after enough fast refreshes and a long idle.
+static constexpr uint32_t CLEAN_AFTER_MS = 10000;
+static constexpr int CLEAN_AFTER_REFRESHES = 10;
 static constexpr uint32_t POWER_OFF_AFTER_MS = 60000;
 static constexpr int DETAIL_PAGES = 3;
 
@@ -18,15 +21,39 @@ static uint8_t page = 0;
 static uint8_t digits[3];
 static int active_digit = 0;
 static uint32_t last_input = 0;
-static bool quality_pending = false;
+static bool save_pending = false;
+static int refreshes = 0;  // fast refreshes since the last quality redraw
+// What is on the panel now, so render() can redraw only the difference.
+static bool drawn = false;
+static Screen drawn_screen;
+static uint16_t drawn_cursor;
 static bool ready = false;
 
-static void render() {
+static void render(bool full = false) {
+  const bool same = drawn && !full && drawn_screen == screen;
   switch (screen) {
-    case Screen::LIST: ui_draw_list(cursor); break;
-    case Screen::JUMP: ui_draw_jump(cursor, digits, active_digit); break;
+    case Screen::LIST:
+      if (same && drawn_cursor / LIST_ROWS == cursor / LIST_ROWS) ui_draw_list_move(drawn_cursor, cursor);
+      else ui_draw_list(cursor);
+      break;
+    case Screen::JUMP:
+      // Opening jump from the list only needs the box drawn over it.
+      if (same || (drawn && !full && drawn_screen == Screen::LIST && drawn_cursor == cursor))
+        ui_draw_jump_box(digits, active_digit);
+      else ui_draw_jump(cursor, digits, active_digit);
+      break;
     case Screen::DETAIL: ui_draw_detail(cursor, page); break;
   }
+  drawn = true;
+  drawn_screen = screen;
+  drawn_cursor = cursor;
+}
+
+static void render_clean() {
+  ui_set_quality(true);
+  render(true);
+  ui_set_quality(false);
+  refreshes = 0;
 }
 
 static void move(int delta) {
@@ -122,8 +149,7 @@ void setup() {
 
   prefs.begin("dex");
   load_state();
-  render();  // quality mode from ui_init
-  ui_set_quality(false);
+  render_clean();
   last_input = millis();
   ready = true;
 }
@@ -143,17 +169,19 @@ void loop() {
       case Screen::DETAIL: handle_detail(in); break;
     }
     render();
+    ++refreshes;
     last_input = now;
-    quality_pending = true;
-  } else if (quality_pending && now - last_input >= QUALITY_AFTER_MS) {
-    ui_set_quality(true);
-    render();
-    ui_set_quality(false);
+    save_pending = true;
+  } else if (save_pending && now - last_input >= SAVE_AFTER_MS) {
     save_state();
-    quality_pending = false;
+    save_pending = false;
+  } else if (refreshes >= CLEAN_AFTER_REFRESHES && now - last_input >= CLEAN_AFTER_MS) {
+    Serial.println("idle: clean redraw");
+    render_clean();
   } else if (now - last_input >= POWER_OFF_AFTER_MS) {
     Serial.println("idle: power off");
     Serial.flush();
+    if (refreshes > 0) render_clean();  // leave a ghost-free image while off
     save_state();
     M5.Display.waitDisplay();
     M5.Power.powerOff();

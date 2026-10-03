@@ -59,31 +59,29 @@ static void detail_header(const DexRecord& r, int page) {
   }
 }
 
-void ui_draw_list(uint16_t cursor) {
+static void list_row(uint16_t idx, bool sel) {
+  const DexRecord& r = dex_get(idx);
+  const int y = HEADER_H + 1 + idx % LIST_ROWS * ROW_H;
+  gfx.fillRect(0, y, W, ROW_H, sel ? TFT_BLACK : TFT_WHITE);
+  gfx.setTextColor(sel ? TFT_WHITE : TFT_BLACK, sel ? TFT_BLACK : TFT_WHITE);
+  char buf[24], name[13];
+  snprintf(buf, sizeof(buf), "%03u  %s", r.id, dex_str(r.name, sizeof(r.name), name));
+  gfx.drawString(buf, 6, y + 1);
+  gfx.setTextColor(TFT_BLACK, TFT_WHITE);
+}
+
+static void list_full(uint16_t cursor) {
   const uint16_t count = dex_count();
   const uint16_t top = cursor / LIST_ROWS * LIST_ROWS;
   char buf[24];
   begin();
   snprintf(buf, sizeof(buf), "%u/%u", top / LIST_ROWS + 1, (count + LIST_ROWS - 1) / LIST_ROWS);
   header("POKEDEX", buf);
-  for (int row = 0; row < LIST_ROWS && top + row < count; ++row) {
-    const uint16_t idx = top + row;
-    const DexRecord& r = dex_get(idx);
-    const int y = HEADER_H + 1 + row * ROW_H;
-    const bool sel = idx == cursor;
-    if (sel) gfx.fillRect(0, y, W, ROW_H, TFT_BLACK);
-    gfx.setTextColor(sel ? TFT_WHITE : TFT_BLACK, sel ? TFT_BLACK : TFT_WHITE);
-    char name[13];
-    snprintf(buf, sizeof(buf), "%03u  %s", r.id, dex_str(r.name, sizeof(r.name), name));
-    gfx.drawString(buf, 6, y + 1);
-  }
-  gfx.setTextColor(TFT_BLACK, TFT_WHITE);
-  end();
+  gfx.setFont(&fonts::Font2);
+  for (uint16_t idx = top; idx < top + LIST_ROWS && idx < count; ++idx) list_row(idx, idx == cursor);
 }
 
-void ui_draw_jump(uint16_t cursor, const uint8_t digits[3], int active) {
-  ui_draw_list(cursor);
-  gfx.startWrite();
+static void jump_box(const uint8_t digits[3], int active) {
   const int bw = 140, bh = 80, bx = (W - bw) / 2, by = 60;
   gfx.fillRect(bx, by, bw, bh, TFT_WHITE);
   gfx.drawRect(bx, by, bw, bh, TFT_BLACK);
@@ -99,7 +97,32 @@ void ui_draw_jump(uint16_t cursor, const uint8_t digits[3], int active) {
     if (i == active) gfx.fillRect(cx - 9, by + 60, 18, 3, TFT_BLACK);
   }
   gfx.setTextDatum(top_left);
-  gfx.endWrite();
+}
+
+void ui_draw_list(uint16_t cursor) {
+  list_full(cursor);
+  end();
+}
+
+void ui_draw_list_move(uint16_t from, uint16_t to) {
+  gfx.startWrite();
+  gfx.setFont(&fonts::Font2);
+  gfx.setTextDatum(top_left);
+  list_row(from, false);
+  list_row(to, true);
+  end();
+}
+
+void ui_draw_jump(uint16_t cursor, const uint8_t digits[3], int active) {
+  list_full(cursor);
+  jump_box(digits, active);
+  end();
+}
+
+void ui_draw_jump_box(const uint8_t digits[3], int active) {
+  gfx.startWrite();
+  jump_box(digits, active);
+  end();
 }
 
 static void page_sprite(const DexRecord& r) {
