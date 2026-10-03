@@ -1,0 +1,5 @@
+.pio/
+.claude/
+tools/cache/
+tools/preview/
+__pycache__/
